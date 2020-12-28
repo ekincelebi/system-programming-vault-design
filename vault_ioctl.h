@@ -1,0 +1,22 @@
+#ifndef __VAULT_H
+#define __VAULT_H
+
+#include <linux/ioctl.h> /* needed for the _IOW etc stuff used later */
+
+#define VAULT_IOC_MAGIC  'k'
+#define VAULT_IOCRESET    _IO(VAULT_IOC_MAGIC, 0)
+#define VAULT_IOCSQUANTUM _IOW(VAULT_IOC_MAGIC,  1, int)
+#define VAULT_IOCSQSET    _IOW(VAULT_IOC_MAGIC,  2, int)
+#define VAULT_IOCTQUANTUM _IO(VAULT_IOC_MAGIC,   3)
+#define VAULT_IOCTQSET    _IO(VAULT_IOC_MAGIC,   4)
+#define VAULT_IOCGQUANTUM _IOR(VAULT_IOC_MAGIC,  5, int)
+#define VAULT_IOCGQSET    _IOR(VAULT_IOC_MAGIC,  6, int)
+#define VAULT_IOCQQUANTUM _IO(VAULT_IOC_MAGIC,   7)
+#define VAULT_IOCQQSET    _IO(VAULT_IOC_MAGIC,   8)
+#define VAULT_IOCXQUANTUM _IOWR(VAULT_IOC_MAGIC, 9, int)
+#define VAULT_IOCXQSET    _IOWR(VAULT_IOC_MAGIC,10, int)
+#define VAULT_IOCHQUANTUM _IO(VAULT_IOC_MAGIC,  11)
+#define VAULT_IOCHQSET    _IO(VAULT_IOC_MAGIC,  12)
+#define VAULT_IOC_MAXNR 12
+
+#endif
