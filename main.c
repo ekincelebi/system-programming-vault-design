@@ -36,8 +36,7 @@ char* get_permutation_function(char keytemp[], int key_length){
         
         key[min_index] = 'z';  //done with ith element
         min = 'z';
-        sprintf(smin_index, "%d", min_index+1);
-        strcat(p_function, smin_index); 
+        p_function[min_index] = i + 1 + '0';
     }
     return p_function;
 }
@@ -82,6 +81,7 @@ int main(){
         lenText--;
     }
     char* p_function = get_permutation_function(myKey, lenKey);
+    printf("Permutation: %s\n", p_function);
     char* decryptedText = apply_on_text(myText, lenText, p_function, lenKey);
     printf("Decrypted: %s\n", decryptedText);
     return 0;
