@@ -31,54 +31,68 @@
 
 #define VAULT_MAJOR 0
 #define VAULT_NR_DEVS 4
-#define VAULT_QUANTUM 4000
-#define VAULT_QSET 1000
+#define VAULT_MAX_TEXT_SIZE 80
 
 int vault_major = VAULT_MAJOR;
 int vault_minor = 0;
 int vault_nr_devs = VAULT_NR_DEVS;
-int vault_quantum = VAULT_QUANTUM;
-int vault_qset = VAULT_QSET;
+int vault_max_text_size = VAULT_MAX_TEXT_SIZE;
+static char * vault_default_key_text = "abcd";
 
 module_param(vault_major, int, S_IRUGO);
 module_param(vault_minor, int, S_IRUGO);
 module_param(vault_nr_devs, int, S_IRUGO);
-module_param(vault_quantum, int, S_IRUGO);
-module_param(vault_qset, int, S_IRUGO);
+module_param(vault_default_key_text, charp, S_IRUGO);
 
-MODULE_AUTHOR("Alessandro Rubini, Jonathan Corbet");
+
+
+MODULE_AUTHOR("Alessandro Rubini, Jonathan Corbet, Ekin, Farid, Gizem");
 MODULE_LICENSE("Dual BSD/GPL");
 
+
+struct vault_key{
+    int size = 4;
+    char * key = vault_default_key_text;
+};
+
 struct vault_dev {
-    char **data;
-    int quantum;
-    int qset;
+    char * cipher;
     unsigned long size;
     struct semaphore sem;
     struct cdev cdev;
 };
 
-struct vault_dev *vault_devices;
+struct vault_dev * vault_devices;
+struct vault_key * vault_default_key;
+
+int alphabet_order(char input){
+    int order = input - 96;
+    if(order > 0 && order < 27) return order;
+    else return -1;
+}
 
 
 int vault_trim(struct vault_dev *dev)
 {
-    int i;
-
-    if (dev->data) {
-        for (i = 0; i < dev->qset; i++) {
-            if (dev->data[i])
-                kfree(dev->data[i]);
-        }
-        kfree(dev->data);
+    if (dev->cipher) {
+        kfree(dev->cipher);
     }
     dev->data = NULL;
-    dev->quantum = vault_quantum;
-    dev->qset = vault_qset;
     dev->size = 0;
     return 0;
 }
 
+void change_key(struct vault_key * new_key){
+    if(!new_key) return;
+    vault_default_key -> size = new_key -> size;
+    vault_default_key -> key = kmalloc((size) * sizeof(char), GFP_KERNEL);
+    strcpy(vault_default_key -> key, new_key -> key);
+}
+
+void delete_cipher(struct file * filp){
+    struct messagebox_dev *dev = filp->private_data;
+    vault_trim(dev);
+}
 
 int vault_open(struct inode *inode, struct file *filp)
 {
@@ -108,9 +122,9 @@ ssize_t vault_read(struct file *filp, char __user *buf, size_t count,
                    loff_t *f_pos)
 {
     struct vault_dev *dev = filp->private_data;
-    int quantum = dev->quantum;
-    int s_pos, q_pos;
     ssize_t retval = 0;
+
+    struct 
 
     if (down_interruptible(&dev->sem))
         return -ERESTARTSYS;
@@ -118,9 +132,6 @@ ssize_t vault_read(struct file *filp, char __user *buf, size_t count,
         goto out;
     if (*f_pos + count > dev->size)
         count = dev->size - *f_pos;
-
-    s_pos = (long) *f_pos / quantum;
-    q_pos = (long) *f_pos % quantum;
 
     if (dev->data == NULL || ! dev->data[s_pos])
         goto out;
@@ -227,80 +238,22 @@ long vault_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	if (err) return -EFAULT;
 
 	switch(cmd) {
-	  case VAULT_IOCRESET:
-		vault_quantum = VAULT_QUANTUM;
-		vault_qset = VAULT_QSET;
-		break;
 
-	  case VAULT_IOCSQUANTUM: /* Set: arg points to the value */
+
+	  case VAULT_SET_KEY: 
+		if (! capable (CAP_SYS_ADMIN)) return -EPERM;
+		key_t key;
+		if (copy_from_user(&key, (char __user*)arg, sizeof(key_t))) return -EFAULT;		
+        change_key(&key)
+        break;
+
+
+	  case VAULT_CLEAR_TEXT: 
 		if (! capable (CAP_SYS_ADMIN))
 			return -EPERM;
-		retval = __get_user(vault_quantum, (int __user *)arg);
-		break;
+        delete_cipher(filp);
 
-	  case VAULT_IOCTQUANTUM: /* Tell: arg is the value */
-		if (! capable (CAP_SYS_ADMIN))
-			return -EPERM;
-		vault_quantum = arg;
-		break;
 
-	  case VAULT_IOCGQUANTUM: /* Get: arg is pointer to result */
-		retval = __put_user(vault_quantum, (int __user *)arg);
-		break;
-
-	  case VAULT_IOCQQUANTUM: /* Query: return it (it's positive) */
-		return vault_quantum;
-
-	  case VAULT_IOCXQUANTUM: /* eXchange: use arg as pointer */
-		if (! capable (CAP_SYS_ADMIN))
-			return -EPERM;
-		tmp = vault_quantum;
-		retval = __get_user(vault_quantum, (int __user *)arg);
-		if (retval == 0)
-			retval = __put_user(tmp, (int __user *)arg);
-		break;
-
-	  case VAULT_IOCHQUANTUM: /* sHift: like Tell + Query */
-		if (! capable (CAP_SYS_ADMIN))
-			return -EPERM;
-		tmp = vault_quantum;
-		vault_quantum = arg;
-		return tmp;
-
-	  case VAULT_IOCSQSET:
-		if (! capable (CAP_SYS_ADMIN))
-			return -EPERM;
-		retval = __get_user(vault_qset, (int __user *)arg);
-		break;
-
-	  case VAULT_IOCTQSET:
-		if (! capable (CAP_SYS_ADMIN))
-			return -EPERM;
-		vault_qset = arg;
-		break;
-
-	  case VAULT_IOCGQSET:
-		retval = __put_user(vault_qset, (int __user *)arg);
-		break;
-
-	  case VAULT_IOCQQSET:
-		return vault_qset;
-
-	  case VAULT_IOCXQSET:
-		if (! capable (CAP_SYS_ADMIN))
-			return -EPERM;
-		tmp = vault_qset;
-		retval = __get_user(vault_qset, (int __user *)arg);
-		if (retval == 0)
-			retval = put_user(tmp, (int __user *)arg);
-		break;
-
-	  case VAULT_IOCHQSET:
-		if (! capable (CAP_SYS_ADMIN))
-			return -EPERM;
-		tmp = vault_qset;
-		vault_qset = arg;
-		return tmp;
 
 	  default:  /* redundant, as cmd was checked against MAXNR */
 		return -ENOTTY;
