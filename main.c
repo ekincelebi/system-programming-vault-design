@@ -41,7 +41,30 @@ char* get_permutation_function(char keytemp[], int key_length){
     return p_function;
 }
 
-char* apply_on_text(char tempText[], int text_length, char tempKey[], int key_length){
+char* encrypt_text(char tempText[], int text_length, char tempKey[], int key_length){
+    char text[text_length];  // should be redeclared, otherwise throws seg. fault
+    strcpy(text, tempText);  // redefine
+    
+    char key[key_length];  // should be redeclared, otherwise throws seg. fault
+    strcpy(key, tempKey);  // redefine
+    
+    char *substr = malloc (sizeof (char) * key_length);
+    char *encryptedText = malloc (sizeof (char) * text_length);
+    strcpy(encryptedText, text);
+    
+    int loop_ctr = text_length / key_length;
+    if(text_length % key_length != 0) loop_ctr++;
+
+    for(int i=0; i<loop_ctr; i++){
+        strncpy(substr, text+(i*key_length),key_length);
+        for(int j=0; j<key_length; j++){
+            encryptedText[j+i*key_length] = substr[key[j]-'0'-1];
+        }
+    }
+    return encryptedText;
+}
+
+char* decrypt_text(char tempText[], int text_length, char tempKey[], int key_length){
     char text[text_length];  // should be redeclared, otherwise throws seg. fault
     strcpy(text, tempText);  // redefine
     
@@ -58,12 +81,11 @@ char* apply_on_text(char tempText[], int text_length, char tempKey[], int key_le
     for(int i=0; i<loop_ctr; i++){
         strncpy(substr, text+(i*key_length),key_length);
         for(int j=0; j<key_length; j++){
-            decryptedText[j+i*key_length] = substr[key[j]-'0'-1];
+            decryptedText[key[j]-'0'-1 + i*key_length] = substr[j];
         }
     }
     return decryptedText;
 }
-
 int main(){
     char myKey[10];
     char myText[100];
@@ -82,7 +104,9 @@ int main(){
     }
     char* p_function = get_permutation_function(myKey, lenKey);
     printf("Permutation: %s\n", p_function);
-    char* decryptedText = apply_on_text(myText, lenText, p_function, lenKey);
+    char* encryptedText = encrypt_text(myText, lenText, p_function, lenKey);
+    printf("Encrypted: %s\n", encryptedText);
+    char* decryptedText = decrypt_text(encryptedText, lenText, p_function, lenKey);
     printf("Decrypted: %s\n", decryptedText);
     return 0;
 }
