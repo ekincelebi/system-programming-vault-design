@@ -47,26 +47,19 @@ module_param(vault_nr_devs, int, S_IRUGO);
 MODULE_AUTHOR("Alessandro Rubini, Jonathan Corbet, Ekin, Farid, Gizem");
 MODULE_LICENSE("Dual BSD/GPL");
 
-////////////////////////setting default key
 key_t vault_default_key;
 vault_default_key.size = 4;
 strcpy(vault_default_key.buf, vault_default_key_text);
-////////////////////////setting default key
-
-
-struct vault_text{
-    char * cipher;
-    size_t size;
-}
 
 struct vault_dev {
-    struct vault_text * text;
+    char * cipher;
+    unsigned long size;
     struct semaphore sem;
     struct cdev cdev;
 };
 
 struct vault_dev * vault_devices;
-
+struct vault_key * vault_default_key;
 
 int alphabet_order(char input){
     int order = input - 96;
@@ -77,22 +70,22 @@ int alphabet_order(char input){
 
 int vault_trim(struct vault_dev *dev)
 {
-    if(dev->text){
-    	if (dev->text->cipher) {
-        	kfree(dev->text->cipher);
-	    }
-	}
-    dev->text = NULL;
+    if (dev->cipher) {
+        kfree(dev->cipher);
+    }
+    dev->data = NULL;
+    dev->size = 0;
     return 0;
 }
 
-void change_key(struct key_t * new_key){
+void change_key(struct vault_key * new_key){
     if(!new_key) return;
-    vault_default_key.size = new_key -> size;
-    strcpy(vault_default_key.buf, new_key -> buf);
+    vault_default_key -> size = new_key -> size;
+    vault_default_key -> key = kmalloc((size) * sizeof(char), GFP_KERNEL);
+    strcpy(vault_default_key -> key, new_key -> key);
 }
 
-void delete_vault(struct file * filp){
+void delete_cipher(struct file * filp){
     struct messagebox_dev *dev = filp->private_data;
     vault_trim(dev);
 }
@@ -254,7 +247,7 @@ long vault_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	  case VAULT_CLEAR_TEXT: 
 		if (! capable (CAP_SYS_ADMIN))
 			return -EPERM;
-        	delete_vault(filp);
+        delete_cipher(filp);
 
 
 

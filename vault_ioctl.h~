@@ -5,7 +5,7 @@
 
 typedef struct key{
     int size;
-    char buf[80];
+    char key[80];
 } key_t;
 
 #define VAULT_IOC_MAGIC  'k'
