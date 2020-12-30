@@ -39,6 +39,9 @@ int vault_nr_devs = VAULT_NR_DEVS;
 int vault_max_text_size = VAULT_MAX_TEXT_SIZE;
 static char * vault_default_key_text = "abcd";
 
+int VAULT_READ_CHECK = 0;
+int VAULT_WRITE_CHECK = 0;
+
 module_param(vault_major, int, S_IRUGO);
 module_param(vault_minor, int, S_IRUGO);
 module_param(vault_nr_devs, int, S_IRUGO);
@@ -95,16 +98,14 @@ void delete_vault(struct file * filp){
 }
 
 
-int* get_permutation_function(char keytemp[], int key_length){
-    char key[key_length];  // should be redeclared, otherwise throws seg. fault
-    int *p_function = kmalloc (sizeof (int) * 100, GFP_KERNEL);
+int* get_permutation_function(char * key, int key_length){
+    int *p_function = (int*)kmalloc (sizeof (int) * key_length, GFP_KERNEL);
     char min = 'z';
     int min_index;
     //char smin_index[2];
 
     int i, j;
 
-    strcpy(key, keytemp);  // redefine
     for(i=0; i<key_length; i++){
         for(j=0; j<key_length; j++){
             char temp = key[j];
@@ -117,29 +118,25 @@ int* get_permutation_function(char keytemp[], int key_length){
         
         key[min_index] = 'z';  //done with ith element
         min = 'z';
-        p_function[min_index] = i + 1 + '0';
+        p_function[min_index] = i + 1;
     }
     return p_function;
 }
 
 
 
-char* encrypt_text(char tempText[], int text_length, int tempKey[], int key_length){
-    char text[text_length];  // should be redeclared, otherwise throws seg. fault    
-    int key[key_length];  // should be redeclared, otherwise throws seg. fault
+char* encrypt_text(const char * text, int text_length, int * key, int key_length){
     int i, j;
     int loop_ctr;
-    char *substr = kmalloc (sizeof (char) * key_length, GFP_KERNEL);
-    char *encryptedText = kmalloc (sizeof (char) * text_length, GFP_KERNEL);
-
-    strcpy(text, tempText);  // redefine
+    char *substr = (char*)kmalloc (sizeof (char) * key_length, GFP_KERNEL);
+    char *encryptedText = (char*)kmalloc (sizeof (char) * text_length, GFP_KERNEL);
 
 
-    for(i = 0; i<key_length; i++){
+    /*for(i = 0; i<key_length; i++){
         key[i] = tempKey[i];
-    }
+    }*/
     
-    strcpy(encryptedText, text);
+    strncpy(encryptedText, text, text_length);
     
     loop_ctr = text_length / key_length;
     if(text_length % key_length != 0) loop_ctr++;
@@ -155,23 +152,19 @@ char* encrypt_text(char tempText[], int text_length, int tempKey[], int key_leng
 
 
 
-char* decrypt_text(char tempText[], int text_length, int tempKey[], int key_length){
-    char text[text_length];  // should be redeclared, otherwise throws seg. fault
+char* decrypt_text(const char * text, int text_length, int * key, int key_length){
     char *substr;
     char *decryptedText;
     int loop_ctr;
-    int key[key_length];  // should be redeclared, otherwise throws seg. fault
     int i, j;
-
-    strcpy(text, tempText);  // redefine
        
-    for(i = 0; i<key_length; i++){
+    /*for(i = 0; i<key_length; i++){
         key[i] = tempKey[i];
-    }
+    }*/
 
 
-    substr = kmalloc (sizeof (char) * key_length, GFP_KERNEL);
-    decryptedText = kmalloc (sizeof (char) * text_length, GFP_KERNEL);
+    substr = (char*)kmalloc (sizeof (char) * key_length, GFP_KERNEL);
+    decryptedText = (char*)kmalloc (sizeof (char) * text_length, GFP_KERNEL);
     strcpy(decryptedText, text);
     
     loop_ctr = text_length / key_length;
@@ -195,14 +188,15 @@ int vault_open(struct inode *inode, struct file *filp)
 {
     struct vault_dev *dev;
     vault_key_t * key;
-
+    const char * initial_key = "ceayf";
     dev = container_of(inode->i_cdev, struct vault_dev, cdev);
-    filp->private_data = dev;
 
-    key = kmalloc(sizeof(vault_key_t), GFP_KERNEL);
-    key->size = 4;
-    strncpy(key->buf, vault_default_key_text, key->size);
+    key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
+    key->size = 5;
+    strncpy(key->buf, initial_key, key->size);
     dev->key = key;
+
+    filp->private_data = dev;
 
     /* trim the device if open was write-only */
     if ((filp->f_flags & O_ACCMODE) == O_WRONLY) {
@@ -236,28 +230,34 @@ ssize_t vault_read(struct file *filp, char __user *buf, size_t count,
     if (down_interruptible(&dev->sem))
         return -ERESTARTSYS;
 
-    if (*f_pos >= dev->text->size)
-        goto out;
+    //if (*f_pos >= dev->text->size)
+    //    goto out;
  
-    if (dev->text == NULL || *f_pos == 0)
+    if (dev->text == NULL)
         goto out;
 
+    if(!VAULT_WRITE_CHECK)
+        goto out;
+
+    int buf_size = dev->text->size;
+
     
-    local_buffer = kmalloc(count, GFP_KERNEL);
+    local_buffer = (char*)kmalloc(sizeof(char)*buf_size, GFP_KERNEL);
+    if(dev->text) strncpy(local_buffer, dev->text->cipher, buf_size);
     
     p_function = get_permutation_function(dev->key->buf, dev->key->size);
     decrypted_text = decrypt_text(dev->text->cipher, dev->text->size, p_function, dev->key->size);
-    memcpy(decrypted_text, local_buffer, dev->text->size);
     
-    if (copy_to_user(buf, local_buffer, count)) {
+    if (copy_to_user(buf, decrypted_text, buf_size)) {
         retval = -EFAULT;
         goto out;
     }
 
-
+    VAULT_WRITE_CHECK--;
     
-    *f_pos -= count;
-    retval = count;
+    *f_pos += buf_size;
+    retval = buf_size;
+    kfree(local_buffer);
 
   out:
     /////exiting the critical section
@@ -277,44 +277,61 @@ ssize_t vault_write(struct file *filp, const char __user *buf, size_t count,
     int* p_function;
     char* encrypted_text;
 
+    /////entering the critical section
     if (down_interruptible(&dev->sem))
         return -ERESTARTSYS;
 
-    if (*f_pos >= 0) {
+    /*if (*f_pos >= 0) {
         retval = 0;
         goto out;
-    }
+    }*/
+
+    if(VAULT_WRITE_CHECK)
+        goto out;
+
+    int buf_size = 0;
+    while(alphabet_order(buf[buf_size]) != -1) buf_size++;
+
+    //if(count > buf_size) 
+    //    goto out;
 
     //copy buffer to a local variable
-    local_buffer = kmalloc(count, GFP_KERNEL);
-    copy_from_user(local_buffer, buf, count);
-    for(; i<count; i++){
-        if(alphabet_order(local_buffer[i]) == -1) goto out;
-    }
+    local_buffer = kmalloc(buf_size * sizeof(char), GFP_KERNEL);
+    if(copy_from_user(local_buffer, buf, buf_size)) goto out;
+
 
     //create an encrypted text struct to put it into the device
-    new_text = kmalloc(sizeof(struct vault_text), GFP_KERNEL);
+    dev->text = (struct vault_text*)kmalloc(sizeof(struct vault_text), GFP_KERNEL);
     
     //get permutation function (int array)
     p_function = get_permutation_function(dev->key->buf, dev->key->size);
     
     //get encrypted text
-    encrypted_text = encrypt_text(local_buffer, count, p_function, dev->key->size);
+    encrypted_text = encrypt_text(local_buffer, buf_size, p_function, dev->key->size);
 
     //assign encrypted text and its size to the struct
-    new_text->cipher = encrypted_text;
-    new_text->size = strlen(encrypted_text);
+    //new_text->cipher = encrypted_text;
+    //new_text->size = strlen(encrypted_text);
 
+    dev->text -> cipher = (char*)kmalloc(sizeof(char)*buf_size, GFP_KERNEL);
+    if(!dev->text->cipher) goto out;
+    strncpy(dev->text->cipher, encrypted_text, buf_size);
+    dev->text->size = buf_size;
     //device's pointer points to the new encrypted text struct
-    dev->text = new_text;
+
+    VAULT_WRITE_CHECK++;
 
 
     *f_pos += count;
     retval = count;
 
+    kfree(local_buffer);
+    //kfree(encrypted_text);
+    //kfree(p_function);
 
 
   out:
+    /////exiting the critical section
     up(&dev->sem);
     return retval;
 }
