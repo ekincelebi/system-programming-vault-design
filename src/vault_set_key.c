@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]){
 
-    struct vault_key_t key;
+    vault_key_t key;
 
     strncpy(key.buf, argv[1], strlen(argv[1]));
     key.size = strlen(key.buf);
