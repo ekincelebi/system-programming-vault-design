@@ -1,2 +1,2 @@
-/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.ko
-/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.o
+/home/itucs/Desktop/src/vault.ko
+/home/itucs/Desktop/src/vault.o

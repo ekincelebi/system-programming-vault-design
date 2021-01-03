@@ -37,7 +37,9 @@ int vault_major = VAULT_MAJOR;
 int vault_minor = 0;
 int vault_nr_devs = VAULT_NR_DEVS;
 int vault_max_text_size = VAULT_MAX_TEXT_SIZE;
-static char * vault_default_key_text = "abcd";
+
+//static char * vault_default_key_text = "ceayf";
+//static int default_key_size = 5;
 
 int VAULT_READ_CHECK = 0;
 int VAULT_WRITE_CHECK = 0;
@@ -88,8 +90,8 @@ int vault_trim(struct vault_dev *dev)
 void change_key(struct file * filp, vault_key_t * new_key){
     struct vault_dev *dev = filp->private_data;
     if(!new_key) return;
-    dev->key -> size = new_key -> size;
-    strncpy(dev->key -> buf, new_key -> buf, new_key -> size);
+    dev->key->size = new_key->size;
+    strncpy(dev->key->buf, new_key->buf, new_key->size);
 }
 
 void delete_vault(struct file * filp){
@@ -188,13 +190,22 @@ int vault_open(struct inode *inode, struct file *filp)
 {
     struct vault_dev *dev;
     vault_key_t * key;
-    const char * initial_key = "ceayf";
+    
+    //const char * initial_key = "ceayf";
     dev = container_of(inode->i_cdev, struct vault_dev, cdev);
 
     key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
-    key->size = 5;
-    strncpy(key->buf, initial_key, key->size);
-    dev->key = key;
+    
+    //key->size = 5; //init key size and key text
+    //strncpy(key->buf, initial_key, key->size);
+    
+    //key->size = default_key_size;
+    //strncpy(key->buf, vault_default_key_text, key->size);
+    
+    //key->size = dev->key->size;
+    //strncpy(key->buf, dev->key->buf, key->size);
+
+    //dev->key = key;
 
     filp->private_data = dev;
 

@@ -1,8 +1,8 @@
-cmd_/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.o := gcc -Wp,-MD,/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/.vault.o.d  -nostdinc -isystem /usr/lib/gcc/i686-linux-gnu/4.8/include  -I/usr/src/linux-headers-3.13.0-32-generic/arch/x86/include -Iarch/x86/include/generated  -Iinclude -I/usr/src/linux-headers-3.13.0-32-generic/arch/x86/include/uapi -Iarch/x86/include/generated/uapi -I/usr/src/linux-headers-3.13.0-32-generic/include/uapi -Iinclude/generated/uapi -include /usr/src/linux-headers-3.13.0-32-generic/include/linux/kconfig.h -Iubuntu/include  -D__KERNEL__ -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -fno-delete-null-pointer-checks -O2 -m32 -msoft-float -mregparm=3 -freg-struct-return -mno-mmx -mno-sse -fno-pic -mpreferred-stack-boundary=2 -march=i686 -mtune=generic -maccumulate-outgoing-args -Wa,-mtune=generic32 -ffreestanding -fstack-protector -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1 -DCONFIG_AS_CFI_SECTIONS=1 -DCONFIG_AS_AVX=1 -DCONFIG_AS_AVX2=1 -pipe -Wno-sign-compare -fno-asynchronous-unwind-tables -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -Wframe-larger-than=1024 -Wno-unused-but-set-variable -fno-omit-frame-pointer -fno-optimize-sibling-calls -pg -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -DCC_HAVE_ASM_GOTO  -DMODULE  -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(vault)"  -D"KBUILD_MODNAME=KBUILD_STR(vault)" -c -o /home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/.tmp_vault.o /home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.c
+cmd_/home/itucs/Desktop/src/vault.o := gcc -Wp,-MD,/home/itucs/Desktop/src/.vault.o.d  -nostdinc -isystem /usr/lib/gcc/i686-linux-gnu/4.8/include  -I/usr/src/linux-headers-3.13.0-32-generic/arch/x86/include -Iarch/x86/include/generated  -Iinclude -I/usr/src/linux-headers-3.13.0-32-generic/arch/x86/include/uapi -Iarch/x86/include/generated/uapi -I/usr/src/linux-headers-3.13.0-32-generic/include/uapi -Iinclude/generated/uapi -include /usr/src/linux-headers-3.13.0-32-generic/include/linux/kconfig.h -Iubuntu/include  -D__KERNEL__ -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -fno-delete-null-pointer-checks -O2 -m32 -msoft-float -mregparm=3 -freg-struct-return -mno-mmx -mno-sse -fno-pic -mpreferred-stack-boundary=2 -march=i686 -mtune=generic -maccumulate-outgoing-args -Wa,-mtune=generic32 -ffreestanding -fstack-protector -DCONFIG_AS_CFI=1 -DCONFIG_AS_CFI_SIGNAL_FRAME=1 -DCONFIG_AS_CFI_SECTIONS=1 -DCONFIG_AS_AVX=1 -DCONFIG_AS_AVX2=1 -pipe -Wno-sign-compare -fno-asynchronous-unwind-tables -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -Wframe-larger-than=1024 -Wno-unused-but-set-variable -fno-omit-frame-pointer -fno-optimize-sibling-calls -pg -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -DCC_HAVE_ASM_GOTO  -DMODULE  -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(vault)"  -D"KBUILD_MODNAME=KBUILD_STR(vault)" -c -o /home/itucs/Desktop/src/.tmp_vault.o /home/itucs/Desktop/src/vault.c
 
-source_/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.o := /home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.c
+source_/home/itucs/Desktop/src/vault.o := /home/itucs/Desktop/src/vault.c
 
-deps_/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.o := \
+deps_/home/itucs/Desktop/src/vault.o := \
   include/linux/module.h \
     $(wildcard include/config/sysfs.h) \
     $(wildcard include/config/modules.h) \
@@ -624,8 +624,8 @@ deps_/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/
   /usr/src/linux-headers-3.13.0-32-generic/arch/x86/include/asm/uaccess_32.h \
   include/generated/uapi/linux/version.h \
   include/linux/uaccess.h \
-  /home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault_ioctl.h \
+  /home/itucs/Desktop/src/vault_ioctl.h \
 
-/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.o: $(deps_/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.o)
+/home/itucs/Desktop/src/vault.o: $(deps_/home/itucs/Desktop/src/vault.o)
 
-$(deps_/home/sysprog/sysprog-vm-shared-folder/system-programming-vault-design/src/vault.o):
+$(deps_/home/itucs/Desktop/src/vault.o):

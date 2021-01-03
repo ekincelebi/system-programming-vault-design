@@ -33,9 +33,9 @@ __attribute__((section("__versions"))) = {
 	{ 0xf0fdf6cb, __VMLINUX_SYMBOL_STR(__stack_chk_fail) },
 	{ 0x4f6b400b, __VMLINUX_SYMBOL_STR(_copy_from_user) },
 	{ 0xc6cbbc89, __VMLINUX_SYMBOL_STR(capable) },
+	{ 0xb6ed1e53, __VMLINUX_SYMBOL_STR(strncpy) },
 	{ 0xc4554217, __VMLINUX_SYMBOL_STR(up) },
 	{ 0x4792c572, __VMLINUX_SYMBOL_STR(down_interruptible) },
-	{ 0xb6ed1e53, __VMLINUX_SYMBOL_STR(strncpy) },
 	{ 0xf82eacf7, __VMLINUX_SYMBOL_STR(kmem_cache_alloc_trace) },
 	{ 0xe2cb65c5, __VMLINUX_SYMBOL_STR(kmalloc_caches) },
 	{ 0x37a0cba, __VMLINUX_SYMBOL_STR(kfree) },
@@ -48,4 +48,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "832B66AFB69DF7734F9BCEB");
+MODULE_INFO(srcversion, "5EDFF37FE2EF4DD2E17E94D");
