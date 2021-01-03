@@ -37,7 +37,12 @@ int vault_major = VAULT_MAJOR;
 int vault_minor = 0;
 int vault_nr_devs = VAULT_NR_DEVS;
 int vault_max_text_size = VAULT_MAX_TEXT_SIZE;
-static char * vault_default_key_text = "abcd";
+
+static char * vault_default_key_text = "ceayf";
+static int default_key_size = 4;
+
+static int mod;
+static int padding;
 
 int VAULT_READ_CHECK = 0;
 int VAULT_WRITE_CHECK = 0;
@@ -67,8 +72,8 @@ struct vault_dev * vault_devices;
 
 
 int alphabet_order(char input){
-    int order = input - 96;
-    if(order > 0 && order < 27) return order;
+    int order = input - 31;
+    if(order > 0 && order < 96) return order;
     else return -1;
 }
 
@@ -88,8 +93,8 @@ int vault_trim(struct vault_dev *dev)
 void change_key(struct file * filp, vault_key_t * new_key){
     struct vault_dev *dev = filp->private_data;
     if(!new_key) return;
-    dev->key -> size = new_key -> size;
-    strncpy(dev->key -> buf, new_key -> buf, new_key -> size);
+    dev->key->size = new_key->size;
+    strncpy(dev->key->buf, new_key->buf, new_key->size);
 }
 
 void delete_vault(struct file * filp){
@@ -100,7 +105,7 @@ void delete_vault(struct file * filp){
 
 int* get_permutation_function(char * key, int key_length){
     int *p_function = (int*)kmalloc (sizeof (int) * key_length, GFP_KERNEL);
-    char min = 'z';
+    char min = '{';
     int min_index;
     //char smin_index[2];
 
@@ -116,8 +121,8 @@ int* get_permutation_function(char * key, int key_length){
             }
         }
         
-        key[min_index] = 'z';  //done with ith element
-        min = 'z';
+        key[min_index] = '{';  //done with ith element
+        min = '{';
         p_function[min_index] = i + 1;
     }
     return p_function;
@@ -188,12 +193,24 @@ int vault_open(struct inode *inode, struct file *filp)
 {
     struct vault_dev *dev;
     vault_key_t * key;
-    const char * initial_key = "ceayf";
+    int mod, padding;
+    int i;
+  
+    
+    //const char * initial_key = "ceazf";
     dev = container_of(inode->i_cdev, struct vault_dev, cdev);
 
     key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
-    key->size = 5;
-    strncpy(key->buf, initial_key, key->size);
+    
+    //key->size = 5; //init key size and key text
+    //strncpy(key->buf, initial_key, key->size);
+    
+    key->size = default_key_size;
+    strncpy(key->buf, vault_default_key_text, key->size);
+    
+    //key->size = dev->key->size;
+    //strncpy(key->buf, dev->key->buf, key->size);
+    
     dev->key = key;
 
     filp->private_data = dev;
@@ -276,6 +293,8 @@ ssize_t vault_write(struct file *filp, const char __user *buf, size_t count,
     struct vault_text * new_text;
     int* p_function;
     char* encrypted_text;
+    int pad_count;
+     
 
     /////entering the critical section
     if (down_interruptible(&dev->sem))
@@ -294,11 +313,26 @@ ssize_t vault_write(struct file *filp, const char __user *buf, size_t count,
 
     //if(count > buf_size) 
     //    goto out;
-
+    
+    
+    //calculate mode
+    mod = buf_size % dev->key->size;
+    if(mod == 0){
+		padding = 0;
+	}else{
+		padding = dev->key->size - mod;
+    //buf_size = buf_size + padding;
+	}
+    
     //copy buffer to a local variable
-    local_buffer = kmalloc(buf_size * sizeof(char), GFP_KERNEL);
+    local_buffer = kmalloc((buf_size+padding) * sizeof(char), GFP_KERNEL);
     if(copy_from_user(local_buffer, buf, buf_size)) goto out;
 
+	for(pad_count=0; pad_count<padding; pad_count++){
+		local_buffer[buf_size+pad_count] = '0';
+	}
+	
+	buf_size = buf_size + padding;
 
     //create an encrypted text struct to put it into the device
     dev->text = (struct vault_text*)kmalloc(sizeof(struct vault_text), GFP_KERNEL);
