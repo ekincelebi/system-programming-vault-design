@@ -10,16 +10,21 @@ int main(int argc, char *argv[]){
 
     vault_key_t key;
 
-    strncpy(key.buf, argv[1], strlen(argv[1]));
+    strcpy(key.buf, (char*)argv[1]);
     key.size = strlen(key.buf);
 
-    char path[80];
-    strncpy(path, argv[2], strlen(argv[2]));
+    printf("Key: %s, Key Size: %d\n", key.buf, key.size);
 
-    int fd = open(path, O_RDWR);
+    int fd = open(argv[2], O_RDWR);
+
+    if(fd == -1){
+        perror("Cannot open the device!");
+        return fd;
+    }
+
     int status = ioctl(fd, VAULT_SET_KEY, &key);
 	
-    if(status == -1) perror("Can't change the key!");
+    if(status == -1) perror("Cannot change the key!");
 		
     return status;
 }

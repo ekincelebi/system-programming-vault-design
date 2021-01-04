@@ -8,5 +8,3 @@ mknod /dev/vault0 c 250 0
 echo "oneringtorulethemall" > /dev/vault0
 echo $(cat /dev/vault0)
 
-
-

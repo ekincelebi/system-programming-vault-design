@@ -94,7 +94,7 @@ void change_key(struct file * filp, vault_key_t * new_key){
     struct vault_dev *dev = filp->private_data;
     if(!new_key) return;
     dev->key->size = new_key->size;
-    strncpy(dev->key->buf, new_key->buf, new_key->size);
+    strcpy(dev->key->buf, new_key->buf);
 }
 
 void delete_vault(struct file * filp){
@@ -192,27 +192,21 @@ char* decrypt_text(const char * text, int text_length, int * key, int key_length
 int vault_open(struct inode *inode, struct file *filp)
 {
     struct vault_dev *dev;
-    vault_key_t * key;
     int mod, padding;
     int i;
   
     
-    //const char * initial_key = "ceazf";
     dev = container_of(inode->i_cdev, struct vault_dev, cdev);
 
-    key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
-    
-    //key->size = 5; //init key size and key text
-    //strncpy(key->buf, initial_key, key->size);
-    
-    key->size = default_key_size;
-    strncpy(key->buf, vault_default_key_text, key->size);
-    
-    //key->size = dev->key->size;
-    //strncpy(key->buf, dev->key->buf, key->size);
-    
-    dev->key = key;
+    //const char * initial_key = "abcd";
 
+    //dev->key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
+    
+    //dev->key->size = 4;
+    
+    //strncpy(dev->key->buf, initial_key, dev->key->size);
+    
+    
     filp->private_data = dev;
 
     /* trim the device if open was write-only */
@@ -263,9 +257,9 @@ ssize_t vault_read(struct file *filp, char __user *buf, size_t count,
     if(dev->text) strncpy(local_buffer, dev->text->cipher, buf_size);
     
     p_function = get_permutation_function(dev->key->buf, dev->key->size);
-    decrypted_text = decrypt_text(dev->text->cipher, dev->text->size, p_function, dev->key->size);
+    //decrypted_text = decrypt_text(dev->text->cipher, dev->text->size, p_function, dev->key->size);
     
-    if (copy_to_user(buf, decrypted_text, buf_size)) {
+    if (copy_to_user(buf, local_buffer, buf_size)) {
         retval = -EFAULT;
         goto out;
     }
@@ -491,6 +485,7 @@ int vault_init_module(void)
     int err;
     dev_t devno = 0;
     struct vault_dev *dev;
+    const char * initial_key = "abcd";
 
     if (vault_major) {
         devno = MKDEV(vault_major, vault_minor);
@@ -519,6 +514,9 @@ int vault_init_module(void)
         dev->size = 0;
         dev->text = NULL;
         dev->key = NULL;
+        dev->key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
+        dev->key->size = 4;
+        strcpy(dev->key->buf, initial_key);
         sema_init(&dev->sem,1);
         devno = MKDEV(vault_major, vault_minor + i);
         cdev_init(&dev->cdev, &vault_fops);
