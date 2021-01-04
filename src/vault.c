@@ -83,11 +83,12 @@ int vault_trim(struct vault_dev *dev)
     if(dev->text){
     	if (dev->text->cipher) {
         	kfree(dev->text->cipher);
+            dev->text->cipher = NULL;
 	    }
         kfree(dev->text);
+        dev->text = NULL;
+        VAULT_WRITE_CHECK = 0;
 	}
-    dev->text = NULL;
-    VAULT_WRITE_CHECK = 0;
     return 0;
 }
 
@@ -242,10 +243,10 @@ ssize_t vault_read(struct file *filp, char __user *buf, size_t count,
     if (down_interruptible(&dev->sem))
         return -ERESTARTSYS;
 
-    if (*f_pos >= dev->text->size)
-        goto out;
- 
     if (dev->text == NULL)
+        goto out;
+
+    if (*f_pos >= dev->text->size)
         goto out;
 
     if(!VAULT_WRITE_CHECK)
