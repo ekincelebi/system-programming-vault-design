@@ -243,30 +243,35 @@ ssize_t vault_read(struct file *filp, char __user *buf, size_t count,
     if (down_interruptible(&dev->sem))
         return -ERESTARTSYS;
 
-    if (dev->text == NULL)
+    if (dev->text == NULL){
+        retval = -EFAULT;
+        goto out;
+
+    }
+
+    //if(dev->text->cipher == NULL) goto out;
+
+    if(VAULT_WRITE_CHECK == 0)
         goto out;
 
     if (*f_pos >= dev->text->size)
-        goto out;
-
-    if(!VAULT_WRITE_CHECK)
         goto out;
 
     int buf_size = dev->text->size;
 
     
     local_buffer = (char*)kmalloc(sizeof(char)*buf_size, GFP_KERNEL);
-    if(dev->text) strncpy(local_buffer, dev->text->cipher, buf_size);
+    if(dev->text && dev->text->cipher) strncpy(local_buffer, dev->text->cipher, buf_size);
     
     p_function = get_permutation_function(dev->key->buf, dev->key->size);
-    //decrypted_text = decrypt_text(dev->text->cipher, dev->text->size, p_function, dev->key->size);
+    decrypted_text = decrypt_text(dev->text->cipher, dev->text->size, p_function, dev->key->size);
     
-    if (copy_to_user(buf, local_buffer, buf_size)) {
+    if (copy_to_user(buf, decrypted_text, buf_size)) {
         retval = -EFAULT;
         goto out;
     }
 
-    //VAULT_WRITE_CHECK--;
+    //VAULT_WRITE_CHECK = 0;
     
     *f_pos += buf_size;
     retval = buf_size;
