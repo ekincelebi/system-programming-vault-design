@@ -3,18 +3,22 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <string.h>
 
 #include "vault_ioctl.h"
 
 int main(int argc, char *argv[]){
 
-    char path[80];
-    strncpy(path, argv[1], strlen(argv[1]));
+    int fd = open(argv[1], O_RDWR);
 
-    int fd = open(path, O_RDWR);
+    if(fd == -1){
+        perror("Cannot open the device to clear!");
+        return fd;
+    }
+
     int status = ioctl(fd, VAULT_CLEAR_TEXT);
 	
-    if(status == -1) perror("Can't clear the text from the device!");
+    if(status == -1) perror("Cannot clear the text from the device!");
 		
     return status;
 }

@@ -87,6 +87,7 @@ int vault_trim(struct vault_dev *dev)
         kfree(dev->text);
 	}
     dev->text = NULL;
+    VAULT_WRITE_CHECK = 0;
     return 0;
 }
 
@@ -99,7 +100,7 @@ void change_key(struct file * filp, vault_key_t * new_key){
 
 void delete_vault(struct file * filp){
     struct vault_dev *dev = filp->private_data;
-    vault_trim(dev);
+    if(dev) vault_trim(dev);
 }
 
 
@@ -198,13 +199,13 @@ int vault_open(struct inode *inode, struct file *filp)
     
     dev = container_of(inode->i_cdev, struct vault_dev, cdev);
 
-    //const char * initial_key = "abcd";
+    const char * initial_key = "abcd";
 
-    //dev->key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
+    dev->key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
     
-    //dev->key->size = 4;
+    dev->key->size = 4;
     
-    //strncpy(dev->key->buf, initial_key, dev->key->size);
+    strncpy(dev->key->buf, initial_key, dev->key->size);
     
     
     filp->private_data = dev;
@@ -241,8 +242,8 @@ ssize_t vault_read(struct file *filp, char __user *buf, size_t count,
     if (down_interruptible(&dev->sem))
         return -ERESTARTSYS;
 
-    //if (*f_pos >= dev->text->size)
-    //    goto out;
+    if (*f_pos >= dev->text->size)
+        goto out;
  
     if (dev->text == NULL)
         goto out;
@@ -264,7 +265,7 @@ ssize_t vault_read(struct file *filp, char __user *buf, size_t count,
         goto out;
     }
 
-    VAULT_WRITE_CHECK--;
+    //VAULT_WRITE_CHECK--;
     
     *f_pos += buf_size;
     retval = buf_size;
@@ -514,9 +515,9 @@ int vault_init_module(void)
         dev->size = 0;
         dev->text = NULL;
         dev->key = NULL;
-        dev->key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
-        dev->key->size = 4;
-        strcpy(dev->key->buf, initial_key);
+        //dev->key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
+        //dev->key->size = 4;
+        //strcpy(dev->key->buf, initial_key);
         sema_init(&dev->sem,1);
         devno = MKDEV(vault_major, vault_minor + i);
         cdev_init(&dev->cdev, &vault_fops);
