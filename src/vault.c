@@ -38,14 +38,15 @@ int vault_minor = 0;
 int vault_nr_devs = VAULT_NR_DEVS;
 int vault_max_text_size = VAULT_MAX_TEXT_SIZE;
 
-static char * vault_default_key_text = "ceayf";
-static int default_key_size = 4;
+//static char * vault_default_key_text = "ceayf";
+//static int default_key_size = 4;
 
 static int mod;
 static int padding;
 
 int VAULT_READ_CHECK = 0;
 int VAULT_WRITE_CHECK = 0;
+int KEY_CHANGED = 0;
 
 module_param(vault_major, int, S_IRUGO);
 module_param(vault_minor, int, S_IRUGO);
@@ -97,6 +98,7 @@ void change_key(struct file * filp, vault_key_t * new_key){
     if(!new_key) return;
     dev->key->size = new_key->size;
     strcpy(dev->key->buf, new_key->buf);
+    KEY_CHANGED = 1;
 }
 
 void delete_vault(struct file * filp){
@@ -108,7 +110,7 @@ void delete_vault(struct file * filp){
 int* get_permutation_function(char * key, int key_length){
     int *p_function = (int*)kmalloc (sizeof (int) * key_length, GFP_KERNEL);
     char min = '{';
-    int min_index;
+    int min_index = 0;
     //char smin_index[2];
 
     int i, j;
@@ -200,15 +202,16 @@ int vault_open(struct inode *inode, struct file *filp)
     
     dev = container_of(inode->i_cdev, struct vault_dev, cdev);
 
-    const char * initial_key = "abcd";
+    if(KEY_CHANGED == 0){
+        
+        const char * initial_key = "abcd";
+    
+        dev->key->size = 4;
+    
+        strcpy(dev->key->buf, initial_key);
+    
+    }
 
-    dev->key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
-    
-    dev->key->size = 4;
-    
-    strncpy(dev->key->buf, initial_key, dev->key->size);
-    
-    
     filp->private_data = dev;
 
     /* trim the device if open was write-only */
@@ -246,7 +249,6 @@ ssize_t vault_read(struct file *filp, char __user *buf, size_t count,
     if (dev->text == NULL){
         retval = -EFAULT;
         goto out;
-
     }
 
     //if(dev->text->cipher == NULL) goto out;
@@ -520,7 +522,8 @@ int vault_init_module(void)
         dev = &vault_devices[i];
         dev->size = 0;
         dev->text = NULL;
-        dev->key = NULL;
+        //dev->key = NULL;
+        dev->key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
         //dev->key = (vault_key_t*)kmalloc(sizeof(vault_key_t), GFP_KERNEL);
         //dev->key->size = 4;
         //strcpy(dev->key->buf, initial_key);
