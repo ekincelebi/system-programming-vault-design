@@ -9,7 +9,7 @@ $ ./setup.sh
 This script will run an initial test (./test_initial_run.sh) inside.
 
 To run several tests:
-$ ./test_cases.sh
+$ ./test_case.sh
 
 To clear text inside the vault
 $ ./VCT ${device-name}
