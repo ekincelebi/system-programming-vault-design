@@ -14,7 +14,8 @@ Bash version: 4.3.11(1)-release
 
 `$ ./setup.sh`
 
-### This script will run an initial test (`./test_initial_run.sh`) inside.
+
+This script will run an initial test (`./test_initial_run.sh`) inside.
 
 ### To run several tests:
 
